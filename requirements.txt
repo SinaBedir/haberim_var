@@ -1,7 +1,7 @@
-nltk==3.6.7
+nltk
 urllib3==1.26.12
 numpy==1.23.1
 pandas==1.4.3
-spacy==2.4.4
+spacy
 mysql-connector-python==8.0.30
 

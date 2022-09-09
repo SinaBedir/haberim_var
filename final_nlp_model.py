@@ -47,22 +47,24 @@ df = df.rename(columns={0: "id",
                        2: "content",
                        3: "date"})
 
-def text_preprocessing(df):
+sw = stopwords.words('english')
+
+def text_preprocessing(df, sw):
     df['content'] = df['content'].str.lower()
     df['content'] = df['content'].str.replace('[^\w\s]', '')
     df['content'] = df['content'].str.replace('\d', '')
-    sw = stopwords.words('english')
     df['content'] = df['content'].apply(lambda x: " ".join(x for x in str(x).split() if x not in sw))
     temp_df = pd.Series(' '.join(df['content']).split()).value_counts()
     drops = temp_df[temp_df <= 1]
     df['content'] = df['content'].apply(lambda x: " ".join(x for x in x.split() if x not in drops))
     return df
 
-df = text_preprocessing(df)
+df = text_preprocessing(df, sw)
 old_df = connect_rds()
+nlp = spacy.load('en_core_web_sm')
 
-def model_pipeline(df, old_df):
-    nlp = spacy.load('en_core_web_sm')
+def model_pipeline(df, old_df, nlp):
+
     nlp_docs = []
 
     for nlp_doc in df["content"]:
@@ -111,7 +113,7 @@ def model_pipeline(df, old_df):
 
     return nlp_df
 
-nlp_df = model_pipeline(df, old_df)
+nlp_df = model_pipeline(df, old_df, nlp)
 
 def news_recommender(nlp_df, new_title, rec_count=50):
     rec_df = nlp_df[nlp_df['col3_title'].str.contains(new_title) == True].sort_values(by="Similarity_Scores", ascending=False)[
