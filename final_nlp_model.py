@@ -12,6 +12,8 @@ import spacy
 import mysql.connector
 import os
 from nltk.corpus import stopwords
+import nltk
+nltk.download('stopwords')
 
 pd.set_option('display.max_columns', None)
 pd.set_option('display.float_format', lambda x: '%.3f' % x)
