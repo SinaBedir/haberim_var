@@ -24,12 +24,14 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 ###############################################################################################
 # Model Pipeline
 ###############################################################################################
-get_messages_sql = "SELECT * FROM CHAT ORDER BY cid ASC"
+get_messages_sql = "SELECT * FROM Haber ORDER BY ID ASC"
 
 def connect_rds():
-    cnx = mysql.connector.connect(host=os.environ['RDS_HOSTNAME'], user=os.environ['RDS_USERNAME'],
-                                  passwd=os.environ['RDS_PASSWORD'], database=os.environ['RDS_DB_NAME'],
-                                  port=os.environ['RDS_PORT'])
+    cnx = mysql.connector.connect(host='final.cluster-ciwzdfrp1kms.eu-central-1.rds.amazonaws.com',
+                                  user='awsbc2',
+                                  passwd='haydegidelum',
+                                  database='haberimvar',
+                                  port='63306')
     cur = cnx.cursor()
     cur.execute(get_messages_sql)
     res = cur.fetchall()
@@ -40,6 +42,10 @@ def connect_rds():
     return df
 
 df = connect_rds()
+df = df.rename(columns={0: "id",
+                       1: "title",
+                       2: "content",
+                       3: "date"})
 
 def text_preprocessing(df):
     df['content'] = df['content'].str.lower()
@@ -52,8 +58,10 @@ def text_preprocessing(df):
     df['content'] = df['content'].apply(lambda x: " ".join(x for x in x.split() if x not in drops))
     return df
 
-def model_pipeline():
-    df = text_preprocessing(df)
+df = text_preprocessing(df)
+old_df = connect_rds()
+
+def model_pipeline(df, old_df):
     nlp = spacy.load('en_core_web_sm')
     nlp_docs = []
 
@@ -72,7 +80,7 @@ def model_pipeline():
             col1.append(i)
             col2.append(y)
 
-    df = connect_rds()
+    old_df = connect_rds()
 
     for i in df["content"]:
         for y in df["content"]:
@@ -103,11 +111,12 @@ def model_pipeline():
 
     return nlp_df
 
-def news_recommender(new_title, rec_count=10):
-    nlp_df = model_pipeline()
+nlp_df = model_pipeline(df, old_df)
+
+def news_recommender(nlp_df, new_title, rec_count=50):
     rec_df = nlp_df[nlp_df['col3_title'].str.contains(new_title) == True].sort_values(by="Similarity_Scores", ascending=False)[
              0:rec_count]
-    print(rec_df["col4_title"])
+    print(pd.DataFrame(rec_df["col4_title"].unique()))
 
-new_title = "Samsung's 32-inch Smart Monitor M8 falls to a new low"
-news_recommender(new_title)
+new_title = "How to Watch Apple’s iPhone 14 Launch"
+news_recommender(nlp_df, new_title)
