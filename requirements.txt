@@ -2,6 +2,8 @@ nltk
 urllib3==1.26.12
 numpy==1.23.1
 pandas==1.4.3
-spacy
+spacy==3.4.1
+spacy-legacy==3.0.10
+spacy-loggers==1.0.3
 mysql-connector-python==8.0.30
 
