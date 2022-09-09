@@ -1,4 +1,4 @@
-nltk==3.7
+nltk==3.6.7
 urllib3==1.26.12
 numpy==1.23.1
 pandas==1.4.3
