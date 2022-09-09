@@ -3,8 +3,6 @@
 ###############################################################################################
 
 from warnings import filterwarnings
-from nltk.corpus import stopwords
-
 import pandas as pd
 import numpy as np
 from urllib.request import urlopen
@@ -13,6 +11,7 @@ import warnings
 import spacy
 import mysql.connector
 import os
+from nltk.corpus import stopwords
 
 pd.set_option('display.max_columns', None)
 pd.set_option('display.float_format', lambda x: '%.3f' % x)
