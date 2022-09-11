@@ -3,11 +3,16 @@
 ###############################################################################################
 
 from warnings import filterwarnings
+import warnings
+
+warnings.simplefilter(action='ignore', category=Warning)
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+warnings.filterwarnings("ignore", category=FutureWarning)
+
 import pandas as pd
 import numpy as np
 from urllib.request import urlopen
 import json
-import warnings
 import spacy
 import mysql.connector
 import os
@@ -18,10 +23,6 @@ nltk.download('stopwords')
 pd.set_option('display.max_columns', None)
 pd.set_option('display.float_format', lambda x: '%.3f' % x)
 pd.set_option('display.width', 300)
-
-warnings.simplefilter(action='ignore', category=Warning)
-warnings.filterwarnings("ignore", category=DeprecationWarning)
-warnings.filterwarnings("ignore", category=FutureWarning)
 
 ###############################################################################################
 # Model Pipeline
@@ -87,6 +88,8 @@ def model_pipeline(df, old_df, nlp):
     col4 = []
     col3_title = []
     col4_title = []
+    col3_id = []
+    col4_id = []
 
     for i in nlp_docs:
         for y in nlp_docs:
@@ -103,8 +106,14 @@ def model_pipeline(df, old_df, nlp):
             col3_title.append(i)
             col4_title.append(y)
 
+    for i in df["id"]:
+        for y in df["id"]:
+            col3_id.append(i)
+            col4_id.append(y)
+
     nlp_df = pd.DataFrame({"col1": col1, "col2": col2, "col3": col3,
-                           "col4": col4, "col3_title": col3_title, "col4_title": col4_title})
+                           "col4": col4, "col3_title": col3_title, "col4_title": col4_title,
+                           "col3_id": col3_id, "col4_id": col4_id})
 
     drop_rows = nlp_df[nlp_df["col3_title"] == nlp_df["col4_title"]]
     nlp_df.drop(drop_rows.index, axis=0, inplace=True)
@@ -127,7 +136,7 @@ nlp_df = model_pipeline(df, old_df, nlp)
 def news_recommender(nlp_df, new_title, rec_count=10):
     rec_df = nlp_df[nlp_df['col3_title'].str.contains(new_title) == True].sort_values(by="Similarity_Scores", ascending=False)[
              0:rec_count]
-    print(pd.DataFrame(rec_df["col4_title"].unique()))
+    print(pd.DataFrame(rec_df[["col4_id", "col4_title"]]))
 
 new_title = "NASA Scrubs Second Launch Attempt of Artemi"
 news_recommender(nlp_df, new_title)
