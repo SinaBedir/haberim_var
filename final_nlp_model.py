@@ -26,7 +26,16 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 ###############################################################################################
 # Model Pipeline
 ###############################################################################################
-get_messages_sql = "SELECT * FROM Haber ORDER BY ID ASC"
+get_messages_sql = """
+SELECT * FROM haberimvar.Haber 
+WHERE 
+YEAR(DATE_) + MONTH(DATE_) + DAY(DATE_) 
+=
+YEAR(DATE_SUB(CURDATE(), INTERVAL 1 DAY)) +
+MONTH(DATE_SUB(CURDATE(), INTERVAL 1 DAY)) +
+DAY(DATE_SUB(CURDATE(), INTERVAL 1 DAY))
+ORDER BY ID ASC
+"""
 
 def connect_rds():
     cnx = mysql.connector.connect(host='final.cluster-ciwzdfrp1kms.eu-central-1.rds.amazonaws.com',
@@ -43,7 +52,7 @@ def connect_rds():
 
     return df
 
-df = connect_rds()
+df = connect_rds().drop_duplicates(subset=2)
 df = df.rename(columns={0: "id",
                        1: "title",
                        2: "content",
@@ -84,8 +93,6 @@ def model_pipeline(df, old_df, nlp):
             col1.append(i)
             col2.append(y)
 
-    old_df = connect_rds()
-
     for i in df["content"]:
         for y in df["content"]:
             col3.append(i)
@@ -117,10 +124,10 @@ def model_pipeline(df, old_df, nlp):
 
 nlp_df = model_pipeline(df, old_df, nlp)
 
-def news_recommender(nlp_df, new_title, rec_count=50):
+def news_recommender(nlp_df, new_title, rec_count=10):
     rec_df = nlp_df[nlp_df['col3_title'].str.contains(new_title) == True].sort_values(by="Similarity_Scores", ascending=False)[
              0:rec_count]
     print(pd.DataFrame(rec_df["col4_title"].unique()))
 
-new_title = "How to Watch Apple’s iPhone 14 Launch"
+new_title = "NASA Scrubs Second Launch Attempt of Artemi"
 news_recommender(nlp_df, new_title)
