@@ -53,12 +53,12 @@ def connect_rds():
 
     return df
 
-df = connect_rds().drop_duplicates(subset=2)
-df = df.rename(columns={0: "id",
+main_df = connect_rds().drop_duplicates(subset=2)
+main_df = main_df.rename(columns={0: "id",
                        1: "title",
                        2: "content",
                        3: "date"})
-
+df = main_df
 sw = stopwords.words('english')
 
 def text_preprocessing(df, sw):
@@ -72,7 +72,7 @@ def text_preprocessing(df, sw):
     return df
 
 df = text_preprocessing(df, sw)
-old_df = connect_rds()
+old_df = main_df
 nlp = spacy.load('en_core_web_sm')
 
 def model_pipeline(df, old_df, nlp):
@@ -90,6 +90,8 @@ def model_pipeline(df, old_df, nlp):
     col4_title = []
     col3_id = []
     col4_id = []
+    col3_content = []
+    col4_content = []
 
     for i in nlp_docs:
         for y in nlp_docs:
@@ -111,9 +113,15 @@ def model_pipeline(df, old_df, nlp):
             col3_id.append(i)
             col4_id.append(y)
 
+    for i in old_df["content"]:
+        for y in old_df["content"]:
+            col3_content.append(i)
+            col4_content.append(y)
+
     nlp_df = pd.DataFrame({"col1": col1, "col2": col2, "col3": col3,
                            "col4": col4, "col3_title": col3_title, "col4_title": col4_title,
-                           "col3_id": col3_id, "col4_id": col4_id})
+                           "col3_id": col3_id, "col4_id": col4_id, "col3_content": col3_content,
+                           "col4_content": col4_content})
 
     drop_rows = nlp_df[nlp_df["col3_title"] == nlp_df["col4_title"]]
     nlp_df.drop(drop_rows.index, axis=0, inplace=True)
@@ -136,7 +144,9 @@ nlp_df = model_pipeline(df, old_df, nlp)
 def news_recommender(nlp_df, new_title, rec_count=10):
     rec_df = nlp_df[nlp_df['col3_title'].str.contains(new_title) == True].sort_values(by="Similarity_Scores", ascending=False)[
              0:rec_count]
-    print(pd.DataFrame(rec_df[["col4_id", "col4_title"]]))
+    split_content = [i.split("[") for i in rec_df["col4_content"]]
+    rec_df["col4_content"] = [i[0] for i in split_content]
+    print(pd.DataFrame(rec_df[["col4_id", "col4_title", "col4_content"]]))
 
-new_title = "NASA Scrubs Second Launch Attempt of Artemi"
+new_title = "Ukraine Seeks"
 news_recommender(nlp_df, new_title)
