@@ -32,9 +32,9 @@ SELECT * FROM haberimvar.Haber
 WHERE 
 YEAR(DATE_) + MONTH(DATE_) + DAY(DATE_) 
 =
-YEAR(DATE_SUB(CURDATE(), INTERVAL 1 DAY)) +
-MONTH(DATE_SUB(CURDATE(), INTERVAL 1 DAY)) +
-DAY(DATE_SUB(CURDATE(), INTERVAL 1 DAY))
+YEAR(CURDATE()) +
+MONTH(CURDATE()) +
+DAY(CURDATE())
 ORDER BY ID ASC
 """
 
@@ -57,7 +57,8 @@ main_df = connect_rds().drop_duplicates(subset=2)
 main_df = main_df.rename(columns={0: "id",
                        1: "title",
                        2: "content",
-                       3: "date"})
+                       3: "date",
+                       4: "url"})
 df = main_df
 sw = stopwords.words('english')
 
@@ -92,6 +93,8 @@ def model_pipeline(df, old_df, nlp):
     col4_id = []
     col3_content = []
     col4_content = []
+    col3_url = []
+    col4_url = []
 
     for i in nlp_docs:
         for y in nlp_docs:
@@ -117,6 +120,11 @@ def model_pipeline(df, old_df, nlp):
         for y in old_df["content"]:
             col3_content.append(i)
             col4_content.append(y)
+
+    for i in old_df["url"]:
+        for y in old_df["url"]:
+            col3_url.append(i)
+            col4_url.append(y)
 
     nlp_df = pd.DataFrame({"col1": col1, "col2": col2, "col3": col3,
                            "col4": col4, "col3_title": col3_title, "col4_title": col4_title,
@@ -146,7 +154,7 @@ def news_recommender(nlp_df, new_title, rec_count=10):
              0:rec_count]
     split_content = [i.split("[") for i in rec_df["col4_content"]]
     rec_df["col4_content"] = [i[0] for i in split_content]
-    print(pd.DataFrame(rec_df[["col4_id", "col4_title", "col4_content"]]))
+    print(pd.DataFrame(rec_df[["col4_id", "col4_title", "col4_content", "col4_url"]]))
 
 new_title = "Ukraine Seeks"
 news_recommender(nlp_df, new_title)
